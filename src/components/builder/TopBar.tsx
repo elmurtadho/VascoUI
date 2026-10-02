@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { CodeExportModal } from "./CodeExportModal";
 import { ShortcutsModal } from "./ShortcutsModal";
+import { SignInButton, SignUpButton, Show, UserButton } from "@clerk/nextjs";
 
 interface TopBarProps {
   onSave?: () => Promise<void>;
@@ -237,6 +238,31 @@ export const TopBar: React.FC<TopBarProps> = ({ onSave }) => {
               </>
             )}
           </button>
+
+          {/* Clerk Auth Controls */}
+          <div className="flex items-center gap-1.5 pl-2 border-l border-zinc-800">
+            <Show when="signed-out">
+              <SignInButton mode="modal">
+                <button className="px-3 py-1.5 rounded-xl text-xs font-medium border border-zinc-700/80 hover:bg-zinc-800 text-zinc-200 hover:text-white transition">
+                  Sign In
+                </button>
+              </SignInButton>
+              <SignUpButton mode="modal">
+                <button className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white transition shadow-sm">
+                  Sign Up
+                </button>
+              </SignUpButton>
+            </Show>
+            <Show when="signed-in">
+              <UserButton
+                appearance={{
+                  elements: {
+                    avatarBox: "w-8 h-8 rounded-xl",
+                  },
+                }}
+              />
+            </Show>
+          </div>
         </div>
       </header>
 
