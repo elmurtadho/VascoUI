@@ -33,8 +33,12 @@ import {
   Globe,
 } from "lucide-react";
 
+import { useTheme } from "@/context/ThemeContext";
+import { ThemeToggle } from "@/components/ThemeToggle";
+
 export default function MarketingLandingPage() {
   const router = useRouter();
+  const { isDark } = useTheme();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [promptText, setPromptText] = useState(
     "A sleek, dark-mode SaaS dashboard with real-time edge telemetry, revenue KPI cards, and responsive charts"
@@ -70,16 +74,35 @@ export default function MarketingLandingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#000000] text-zinc-100 selection:bg-indigo-500 selection:text-white flex flex-col font-sans relative overflow-x-hidden">
+    <div
+      className={`min-h-screen selection:bg-indigo-500 selection:text-white flex flex-col font-sans relative overflow-x-hidden transition-colors duration-200 ${
+        isDark ? "bg-[#09090b] text-zinc-100" : "bg-[#f8fafc] text-zinc-900"
+      }`}
+    >
       {/* Background Subtle Ambient Glow */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-        <div className="absolute top-[-12%] left-1/2 -translate-x-1/2 w-[1100px] h-[580px] bg-gradient-to-b from-indigo-600/15 via-purple-600/10 to-transparent blur-[140px] rounded-full" />
-        <div className="absolute top-[38%] -right-[15%] w-[600px] h-[600px] bg-indigo-500/10 blur-[150px] rounded-full" />
-        <div className="absolute top-[65%] -left-[15%] w-[550px] h-[550px] bg-purple-500/10 blur-[150px] rounded-full" />
+        <div
+          className={`absolute top-[-12%] left-1/2 -translate-x-1/2 w-[1100px] h-[580px] blur-[140px] rounded-full ${
+            isDark
+              ? "bg-gradient-to-b from-indigo-600/15 via-purple-600/10 to-transparent"
+              : "bg-gradient-to-b from-indigo-300/20 via-purple-200/15 to-transparent"
+          }`}
+        />
+        <div
+          className={`absolute top-[38%] -right-[15%] w-[600px] h-[600px] blur-[150px] rounded-full ${
+            isDark ? "bg-indigo-500/10" : "bg-indigo-300/15"
+          }`}
+        />
       </div>
 
       {/* Top Navbar */}
-      <header className="sticky top-0 z-50 w-full border-b border-white/[0.08] bg-[#000000]/80 backdrop-blur-2xl">
+      <header
+        className={`sticky top-0 z-50 w-full border-b backdrop-blur-2xl transition-colors duration-200 ${
+          isDark
+            ? "border-white/[0.08] bg-[#09090b]/80"
+            : "border-zinc-200 bg-white/80 shadow-sm"
+        }`}
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2.5 group">
@@ -87,41 +110,73 @@ export default function MarketingLandingPage() {
               <Sparkles className="w-4 h-4" />
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="font-extrabold text-base tracking-tight text-white">
+              <span
+                className={`font-extrabold text-base tracking-tight ${
+                  isDark ? "text-white" : "text-zinc-900"
+                }`}
+              >
                 VASCO
               </span>
-              <span className="text-[10px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider bg-white/[0.05] border border-white/[0.08] text-indigo-300">
+              <span
+                className={`text-[10px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider ${
+                  isDark
+                    ? "bg-white/[0.05] border border-white/[0.08] text-indigo-300"
+                    : "bg-indigo-50 border border-indigo-200 text-indigo-700"
+                }`}
+              >
                 AI STUDIO
               </span>
             </div>
           </Link>
 
           {/* Desktop Nav Links */}
-          <nav className="hidden md:flex items-center gap-8 text-xs font-medium text-zinc-400">
-            <a href="#prompt-mockup" className="hover:text-white transition">
+          <nav
+            className={`hidden md:flex items-center gap-8 text-xs font-medium ${
+              isDark ? "text-zinc-400" : "text-zinc-600"
+            }`}
+          >
+            <a
+              href="#prompt-mockup"
+              className={isDark ? "hover:text-white transition" : "hover:text-zinc-900 transition"}
+            >
               AI Generator
             </a>
-            <a href="#mockup" className="hover:text-white transition">
+            <a
+              href="#mockup"
+              className={isDark ? "hover:text-white transition" : "hover:text-zinc-900 transition"}
+            >
               Studio Workspace
             </a>
-            <a href="#features" className="hover:text-white transition">
+            <a
+              href="#features"
+              className={isDark ? "hover:text-white transition" : "hover:text-zinc-900 transition"}
+            >
               Architecture
             </a>
             <a
               href="https://github.com/elmurtadho/VascoUI"
               target="_blank"
               rel="noreferrer"
-              className="hover:text-white transition"
+              className={isDark ? "hover:text-white transition" : "hover:text-zinc-900 transition"}
             >
               GitHub
             </a>
           </nav>
 
-          {/* Desktop Auth Actions */}
+          {/* Desktop Auth Actions & Theme Toggle */}
           <div className="hidden sm:flex items-center gap-3">
+            {/* Global Theme Toggle */}
+            <ThemeToggle />
+
             <Show when="signed-out">
               <SignInButton mode="modal">
-                <button className="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-zinc-300 hover:text-white hover:bg-white/[0.05] border border-transparent hover:border-white/[0.08] transition">
+                <button
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold border transition ${
+                    isDark
+                      ? "text-zinc-300 hover:text-white hover:bg-white/[0.05] border-transparent hover:border-white/[0.08]"
+                      : "text-zinc-700 hover:text-zinc-900 hover:bg-zinc-100 border-transparent hover:border-zinc-200"
+                  }`}
+                >
                   Sign In
                 </button>
               </SignInButton>
@@ -143,27 +198,36 @@ export default function MarketingLandingPage() {
               <UserButton
                 appearance={{
                   elements: {
-                    avatarBox: "w-8 h-8 rounded-xl ring-2 ring-white/[0.08]",
+                    avatarBox: `w-8 h-8 rounded-xl ring-2 ${
+                      isDark ? "ring-white/[0.08]" : "ring-zinc-200"
+                    }`,
                   },
                 }}
               />
             </Show>
           </div>
 
-          {/* Mobile Hamburger Button */}
+          {/* Mobile Hamburger Button & Theme Toggle */}
           <div className="flex sm:hidden items-center gap-2">
+            <ThemeToggle />
             <Show when="signed-in">
               <UserButton
                 appearance={{
                   elements: {
-                    avatarBox: "w-7 h-7 rounded-lg ring-1 ring-white/[0.08]",
+                    avatarBox: `w-7 h-7 rounded-lg ring-1 ${
+                      isDark ? "ring-white/[0.08]" : "ring-zinc-200"
+                    }`,
                   },
                 }}
               />
             </Show>
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 rounded-lg text-zinc-400 hover:text-white hover:bg-white/[0.05] border border-white/[0.08]"
+              className={`p-2 rounded-lg border transition ${
+                isDark
+                  ? "text-zinc-400 hover:text-white hover:bg-white/[0.05] border-white/[0.08]"
+                  : "text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 border-zinc-200"
+              }`}
               aria-label="Toggle Navigation Menu"
             >
               {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}

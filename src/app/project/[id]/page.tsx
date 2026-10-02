@@ -35,6 +35,7 @@ import {
   Grid,
 } from "lucide-react";
 import { getProjectByIdAction } from "@/app/actions/project";
+import { useTheme } from "@/context/ThemeContext";
 
 interface ChatMessage {
   id: string;
@@ -112,22 +113,16 @@ export default function SleekProjectBuilderPage() {
   const [showExportModal, setShowExportModal] = useState(false);
   const [activeScreenIndex, setActiveScreenIndex] = useState(0);
 
-  // Theme & Appearance Customization States
-  const [theme, setTheme] = useState<ThemeMode>("dark");
+  const { theme, isDark, toggleTheme, setTheme } = useTheme();
   const [accent, setAccent] = useState<AccentKey>("orange");
   const [showDotGrid, setShowDotGrid] = useState(true);
 
-  const isDark = theme === "dark";
   const currentAccent = ACCENT_PALETTES[accent];
 
-  // Sync theme with localStorage
+  // Sync accent with localStorage
   useEffect(() => {
     try {
-      const savedTheme = localStorage.getItem("sleek_theme") as ThemeMode | null;
-      if (savedTheme === "dark" || savedTheme === "light") {
-        setTheme(savedTheme);
-      }
-      const savedAccent = localStorage.getItem("sleek_accent") as AccentKey | null;
+      const savedAccent = localStorage.getItem("vasco_accent") as AccentKey | null;
       if (savedAccent && ACCENT_PALETTES[savedAccent]) {
         setAccent(savedAccent);
       }
@@ -136,20 +131,10 @@ export default function SleekProjectBuilderPage() {
     }
   }, []);
 
-  const toggleTheme = () => {
-    const nextTheme = isDark ? "light" : "dark";
-    setTheme(nextTheme);
-    try {
-      localStorage.setItem("sleek_theme", nextTheme);
-    } catch {
-      // Ignore
-    }
-  };
-
   const handleSelectAccent = (key: AccentKey) => {
     setAccent(key);
     try {
-      localStorage.setItem("sleek_accent", key);
+      localStorage.setItem("vasco_accent", key);
     } catch {
       // Ignore
     }
@@ -161,7 +146,7 @@ export default function SleekProjectBuilderPage() {
       id: "msg_1",
       sender: "user",
       content:
-        "FINAL DELIVERABLE: A complete, cohesive, high-fidelity EDUCORE School Management System design in Sleek.design, including the public school website, authentication, Admin portal, Teacher portal, Student portal, Parent portal, reusable components, and all essential academic management screens and workflows.\n\nBuild the whole application now.",
+        "FINAL DELIVERABLE: A complete, cohesive, high-fidelity EDUCORE School Management System design in Vasco Studio, including the public school website, authentication, Admin portal, Teacher portal, Student portal, Parent portal, reusable components, and all essential academic management screens and workflows.\n\nBuild the whole application now.",
       timestamp: "Just now",
     },
     {
@@ -256,24 +241,18 @@ export default function SleekProjectBuilderPage() {
             : "bg-[#ffffff] border-zinc-200 shadow-sm"
         }`}
       >
-        {/* Left Side: Sleek Ribbon Logo & Brand Name */}
+        {/* Left Side: VASCO Studio Brand Logo */}
         <div className="flex items-center gap-3">
-          <Link href="/dashboard" className="flex items-center gap-2 group">
-            {/* Sleek Ribbon Logo Icon */}
-            <svg
-              className="w-5 h-5 transition-transform group-hover:scale-105"
-              style={{ color: currentAccent.primary }}
-              viewBox="0 0 24 24"
-              fill="currentColor"
-            >
-              <path d="M8.5 4a4.5 4.5 0 0 0-4.5 4.5c0 2.5 2 4.5 4.5 4.5h7a2.5 2.5 0 1 1 0 5H6a1 1 0 1 0 0 2h9.5a4.5 4.5 0 0 0 4.5-4.5c0-2.5-2-4.5-4.5-4.5h-7a2.5 2.5 0 1 1 0-5H18a1 1 0 1 0 0-2H8.5z" />
-            </svg>
+          <Link href="/dashboard" className="flex items-center gap-2.5 group">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500 via-indigo-600 to-purple-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/25 group-hover:scale-105 transition">
+              <Sparkles className="w-4 h-4" />
+            </div>
             <span
-              className={`font-bold text-sm tracking-tight ${
+              className={`font-extrabold text-base tracking-tight ${
                 isDark ? "text-white" : "text-zinc-900"
               }`}
             >
-              sleek.design
+              VASCO
             </span>
           </Link>
         </div>
