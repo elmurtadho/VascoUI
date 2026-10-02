@@ -1,25 +1,17 @@
 "use client";
 
 import React from "react";
-import { BuilderNode, Device } from "@/types/builder";
+import { useBuilderStore } from "@/store/useBuilderStore";
 import { CanvasNode } from "./CanvasNode";
 
 interface RecursiveRendererProps {
-  nodes: BuilderNode[];
-  device: Device;
+  nodeId: string;
 }
 
-export const RecursiveRenderer: React.FC<RecursiveRendererProps> = ({
-  nodes,
-  device,
-}) => {
-  if (!nodes || nodes.length === 0) return null;
+export const RecursiveRenderer: React.FC<RecursiveRendererProps> = ({ nodeId }) => {
+  const node = useBuilderStore((state) => state.nodes[nodeId]);
 
-  return (
-    <>
-      {nodes.map((node) => (
-        <CanvasNode key={node.id} node={node} device={device} />
-      ))}
-    </>
-  );
+  if (!node) return null;
+
+  return <CanvasNode nodeId={nodeId} />;
 };

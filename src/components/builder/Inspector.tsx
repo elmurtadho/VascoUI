@@ -1,8 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { useBuilderStore } from "@/lib/store/useBuilderStore";
-import { findNodeById, computeEffectiveStyles } from "@/lib/builder/utils";
+import { useBuilderStore, computeEffectiveStyles } from "@/store/useBuilderStore";
 import {
   SlidersHorizontal,
   Layout,
@@ -26,7 +25,7 @@ export const Inspector: React.FC = () => {
   const {
     nodes,
     selectedNodeId,
-    currentDevice,
+    viewport,
     updateNodeProps,
     updateNodeStyles,
     deleteNode,
@@ -35,7 +34,6 @@ export const Inspector: React.FC = () => {
     moveNodeDown,
   } = useBuilderStore();
 
-  // Accordion state
   const [openSections, setOpenSections] = useState({
     props: true,
     presets: true,
@@ -49,12 +47,12 @@ export const Inspector: React.FC = () => {
     setOpenSections((prev) => ({ ...prev, [section]: !prev[section] }));
   };
 
-  const selectedNode = selectedNodeId ? findNodeById(nodes, selectedNodeId) : null;
+  const selectedNode = selectedNodeId ? nodes[selectedNodeId] : null;
 
-  if (!selectedNode) {
+  if (!selectedNode || selectedNode.type === "root") {
     return (
-      <aside className="w-80 bg-zinc-950 border-l border-zinc-800/80 flex flex-col items-center justify-center p-6 text-center select-none z-20">
-        <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-zinc-900 border border-zinc-800 text-zinc-500 mb-4 shadow-inner">
+      <aside className="w-80 bg-[#0a0a0a] border-l border-white/10 flex flex-col items-center justify-center p-6 text-center select-none z-20">
+        <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-white/5 border border-white/10 text-zinc-500 mb-4 shadow-inner">
           <SlidersHorizontal className="w-6 h-6 stroke-[1.5]" />
         </div>
         <h3 className="text-xs font-semibold text-zinc-200 mb-1">
@@ -62,20 +60,20 @@ export const Inspector: React.FC = () => {
         </h3>
         <p className="text-[11px] text-zinc-500 max-w-[210px] leading-relaxed">
           Click or double-click any component on the canvas to inspect and customize its styles for the{" "}
-          <strong className="text-indigo-400 capitalize">{currentDevice}</strong> breakpoint.
+          <strong className="text-indigo-400 capitalize">{viewport}</strong> breakpoint.
         </p>
       </aside>
     );
   }
 
-  const effectiveStyles = computeEffectiveStyles(selectedNode, currentDevice);
+  const effectiveStyles = computeEffectiveStyles(selectedNode, viewport);
 
   const handleStyleChange = (key: keyof React.CSSProperties, value: unknown) => {
-    updateNodeStyles(selectedNode.id, { [key]: value }, currentDevice);
+    updateNodeStyles(selectedNode.id, { [key]: value }, viewport);
   };
 
   const getDeviceIcon = () => {
-    switch (currentDevice) {
+    switch (viewport) {
       case "mobile":
         return <Smartphone className="w-3.5 h-3.5 text-indigo-400" />;
       case "tablet":
@@ -86,8 +84,9 @@ export const Inspector: React.FC = () => {
     }
   };
 
-  // Preset Layout Quick Actions
-  const applyPresetLayout = (preset: "center" | "row-between" | "vertical-stack" | "grid-2" | "grid-3") => {
+  const applyPresetLayout = (
+    preset: "center" | "row-between" | "vertical-stack" | "grid-2" | "grid-3"
+  ) => {
     switch (preset) {
       case "center":
         updateNodeStyles(selectedNode.id, {
@@ -131,13 +130,12 @@ export const Inspector: React.FC = () => {
     }
   };
 
-  // Color Swatches
   const colorSwatches = [
     { name: "Transparent", val: "transparent" },
     { name: "Pure Black", val: "#000000" },
-    { name: "Zinc 950", val: "#09090b" },
-    { name: "Zinc 900", val: "#18181b" },
-    { name: "Zinc 800", val: "#27272a" },
+    { name: "Zinc 950", val: "#050505" },
+    { name: "Zinc 900", val: "#0a0a0a" },
+    { name: "Zinc 800", val: "#18181b" },
     { name: "Indigo", val: "#6366f1" },
     { name: "Emerald", val: "#10b981" },
     { name: "Rose", val: "#f43f5e" },
@@ -146,9 +144,9 @@ export const Inspector: React.FC = () => {
   ];
 
   return (
-    <aside className="w-80 bg-zinc-950 border-l border-zinc-800/80 flex flex-col h-full select-none z-20 overflow-y-auto">
+    <aside className="w-80 bg-[#0a0a0a] border-l border-white/10 flex flex-col h-full select-none z-20 overflow-y-auto">
       {/* Node Header & Actions */}
-      <div className="p-4 border-b border-zinc-800/80 bg-zinc-900/40">
+      <div className="p-4 border-b border-white/10 bg-[#050505]/40">
         <div className="flex items-center justify-between mb-2.5">
           <div className="flex items-center gap-2">
             <span className="text-xs font-bold text-white uppercase tracking-wider">
@@ -162,28 +160,28 @@ export const Inspector: React.FC = () => {
             <button
               onClick={() => moveNodeUp(selectedNode.id)}
               title="Move Up"
-              className="p-1 rounded-md hover:bg-zinc-800 text-zinc-400 hover:text-white transition"
+              className="p-1 rounded-md hover:bg-white/5 text-zinc-400 hover:text-white transition"
             >
               <ArrowUp className="w-3.5 h-3.5" />
             </button>
             <button
               onClick={() => moveNodeDown(selectedNode.id)}
               title="Move Down"
-              className="p-1 rounded-md hover:bg-zinc-800 text-zinc-400 hover:text-white transition"
+              className="p-1 rounded-md hover:bg-white/5 text-zinc-400 hover:text-white transition"
             >
               <ArrowDown className="w-3.5 h-3.5" />
             </button>
             <button
               onClick={() => duplicateNode(selectedNode.id)}
               title="Duplicate"
-              className="p-1 rounded-md hover:bg-zinc-800 text-zinc-400 hover:text-white transition"
+              className="p-1 rounded-md hover:bg-white/5 text-zinc-400 hover:text-white transition"
             >
               <Copy className="w-3.5 h-3.5" />
             </button>
             <button
               onClick={() => deleteNode(selectedNode.id)}
               title="Delete"
-              className="p-1 rounded-md hover:bg-zinc-800 text-zinc-400 hover:text-red-400 transition"
+              className="p-1 rounded-md hover:bg-white/5 text-zinc-400 hover:text-red-400 transition"
             >
               <Trash2 className="w-3.5 h-3.5" />
             </button>
@@ -195,14 +193,14 @@ export const Inspector: React.FC = () => {
           <div className="flex items-center gap-2">
             {getDeviceIcon()}
             <span>
-              Target Breakpoint: <strong className="capitalize text-white">{currentDevice}</strong>
+              Target Breakpoint: <strong className="capitalize text-white">{viewport}</strong>
             </span>
           </div>
           <span className="text-[10px] text-indigo-400 font-medium">Auto Cascades</span>
         </div>
       </div>
 
-      <div className="divide-y divide-zinc-800/60 text-xs">
+      <div className="divide-y divide-white/10 text-xs">
         {/* SECTION 1: Content & Element Props */}
         <div className="p-4">
           <button
@@ -222,11 +220,10 @@ export const Inspector: React.FC = () => {
 
           {openSections.props && (
             <div className="space-y-3">
-              {/* Content / Text / Button Text */}
               {["heading", "text", "button"].includes(selectedNode.type) && (
                 <div>
                   <label className="block text-[11px] text-zinc-400 mb-1">
-                    Text (Double click on canvas to edit directly)
+                    Text Content
                   </label>
                   <textarea
                     rows={2}
@@ -234,12 +231,11 @@ export const Inspector: React.FC = () => {
                     onChange={(e) =>
                       updateNodeProps(selectedNode.id, { content: e.target.value })
                     }
-                    className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2 text-xs text-white placeholder-zinc-500 focus:border-indigo-500 outline-none resize-none"
+                    className="w-full bg-[#050505] border border-white/10 rounded-lg p-2 text-xs text-white placeholder-zinc-500 focus:border-indigo-500 outline-none resize-none"
                   />
                 </div>
               )}
 
-              {/* Tag selector for headings */}
               {selectedNode.type === "heading" && (
                 <div>
                   <label className="block text-[11px] text-zinc-400 mb-1">
@@ -252,7 +248,7 @@ export const Inspector: React.FC = () => {
                         tag: e.target.value as "h1" | "h2" | "h3" | "h4",
                       })
                     }
-                    className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2 text-xs text-white focus:border-indigo-500 outline-none"
+                    className="w-full bg-[#050505] border border-white/10 rounded-lg p-2 text-xs text-white focus:border-indigo-500 outline-none"
                   >
                     <option value="h1">H1 (Hero Heading)</option>
                     <option value="h2">H2 (Section Heading)</option>
@@ -262,7 +258,6 @@ export const Inspector: React.FC = () => {
                 </div>
               )}
 
-              {/* Button Link */}
               {selectedNode.type === "button" && (
                 <div>
                   <label className="block text-[11px] text-zinc-400 mb-1">
@@ -275,12 +270,11 @@ export const Inspector: React.FC = () => {
                       updateNodeProps(selectedNode.id, { href: e.target.value })
                     }
                     placeholder="https://..."
-                    className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2 text-xs text-white focus:border-indigo-500 outline-none"
+                    className="w-full bg-[#050505] border border-white/10 rounded-lg p-2 text-xs text-white focus:border-indigo-500 outline-none"
                   />
                 </div>
               )}
 
-              {/* Image URL & Alt */}
               {selectedNode.type === "image" && (
                 <>
                   <div>
@@ -294,7 +288,7 @@ export const Inspector: React.FC = () => {
                         updateNodeProps(selectedNode.id, { src: e.target.value })
                       }
                       placeholder="https://..."
-                      className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2 text-xs text-white focus:border-indigo-500 outline-none"
+                      className="w-full bg-[#050505] border border-white/10 rounded-lg p-2 text-xs text-white focus:border-indigo-500 outline-none"
                     />
                   </div>
                   <div>
@@ -308,7 +302,7 @@ export const Inspector: React.FC = () => {
                         updateNodeProps(selectedNode.id, { alt: e.target.value })
                       }
                       placeholder="Image description..."
-                      className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2 text-xs text-white focus:border-indigo-500 outline-none"
+                      className="w-full bg-[#050505] border border-white/10 rounded-lg p-2 text-xs text-white focus:border-indigo-500 outline-none"
                     />
                   </div>
                 </>
@@ -317,7 +311,7 @@ export const Inspector: React.FC = () => {
           )}
         </div>
 
-        {/* SECTION 2: Quick Layout Presets (For containers) */}
+        {/* SECTION 2: Quick Layout Presets */}
         {["container", "section", "card"].includes(selectedNode.type) && (
           <div className="p-4">
             <button
@@ -339,25 +333,25 @@ export const Inspector: React.FC = () => {
               <div className="grid grid-cols-2 gap-1.5">
                 <button
                   onClick={() => applyPresetLayout("center")}
-                  className="p-2 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-left text-[11px] text-zinc-300 hover:text-white transition"
+                  className="p-2 rounded-lg bg-[#050505] hover:bg-white/5 border border-white/10 text-left text-[11px] text-zinc-300 hover:text-white transition"
                 >
                   🎯 Center All
                 </button>
                 <button
                   onClick={() => applyPresetLayout("row-between")}
-                  className="p-2 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-left text-[11px] text-zinc-300 hover:text-white transition"
+                  className="p-2 rounded-lg bg-[#050505] hover:bg-white/5 border border-white/10 text-left text-[11px] text-zinc-300 hover:text-white transition"
                 >
                   ↔ Space Between
                 </button>
                 <button
                   onClick={() => applyPresetLayout("vertical-stack")}
-                  className="p-2 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-left text-[11px] text-zinc-300 hover:text-white transition"
+                  className="p-2 rounded-lg bg-[#050505] hover:bg-white/5 border border-white/10 text-left text-[11px] text-zinc-300 hover:text-white transition"
                 >
                   ☰ Vertical Stack
                 </button>
                 <button
                   onClick={() => applyPresetLayout("grid-2")}
-                  className="p-2 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-left text-[11px] text-zinc-300 hover:text-white transition"
+                  className="p-2 rounded-lg bg-[#050505] hover:bg-white/5 border border-white/10 text-left text-[11px] text-zinc-300 hover:text-white transition"
                 >
                   ⊞ 2-Col Grid
                 </button>
@@ -374,7 +368,7 @@ export const Inspector: React.FC = () => {
           >
             <div className="flex items-center gap-2">
               <Layout className="w-3.5 h-3.5 text-zinc-400" />
-              <span>Layout & Display</span>
+              <span>Layout & Dimensions</span>
             </div>
             {openSections.layout ? (
               <ChevronUp className="w-3.5 h-3.5 text-zinc-500" />
@@ -385,10 +379,9 @@ export const Inspector: React.FC = () => {
 
           {openSections.layout && (
             <div className="space-y-3">
-              {/* Display */}
               <div>
                 <label className="block text-[11px] text-zinc-400 mb-1">Display</label>
-                <div className="grid grid-cols-4 gap-1 bg-zinc-900 p-1 rounded-lg border border-zinc-800">
+                <div className="grid grid-cols-4 gap-1 bg-[#050505] p-1 rounded-lg border border-white/10">
                   {["block", "flex", "grid", "inline-flex"].map((d) => (
                     <button
                       key={d}
@@ -405,7 +398,6 @@ export const Inspector: React.FC = () => {
                 </div>
               </div>
 
-              {/* Flex Direction */}
               {(effectiveStyles.display === "flex" ||
                 effectiveStyles.display === "inline-flex") && (
                 <>
@@ -413,10 +405,10 @@ export const Inspector: React.FC = () => {
                     <label className="block text-[11px] text-zinc-400 mb-1">
                       Direction
                     </label>
-                    <div className="grid grid-cols-2 gap-1 bg-zinc-900 p-1 rounded-lg border border-zinc-800">
+                    <div className="grid grid-cols-2 gap-1 bg-[#050505] p-1 rounded-lg border border-white/10">
                       {[
-                        { label: "Row (Horizontal)", val: "row" },
-                        { label: "Column (Vertical)", val: "column" },
+                        { label: "Row", val: "row" },
+                        { label: "Column", val: "column" },
                       ].map((item) => (
                         <button
                           key={item.val}
@@ -433,7 +425,6 @@ export const Inspector: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Justify Content */}
                   <div>
                     <label className="block text-[11px] text-zinc-400 mb-1">
                       Justify Content
@@ -443,7 +434,7 @@ export const Inspector: React.FC = () => {
                       onChange={(e) =>
                         handleStyleChange("justifyContent", e.target.value)
                       }
-                      className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2 text-xs text-white focus:border-indigo-500 outline-none"
+                      className="w-full bg-[#050505] border border-white/10 rounded-lg p-2 text-xs text-white focus:border-indigo-500 outline-none"
                     >
                       <option value="flex-start">Start</option>
                       <option value="center">Center</option>
@@ -453,7 +444,6 @@ export const Inspector: React.FC = () => {
                     </select>
                   </div>
 
-                  {/* Align Items */}
                   <div>
                     <label className="block text-[11px] text-zinc-400 mb-1">
                       Align Items
@@ -463,7 +453,7 @@ export const Inspector: React.FC = () => {
                       onChange={(e) =>
                         handleStyleChange("alignItems", e.target.value)
                       }
-                      className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2 text-xs text-white focus:border-indigo-500 outline-none"
+                      className="w-full bg-[#050505] border border-white/10 rounded-lg p-2 text-xs text-white focus:border-indigo-500 outline-none"
                     >
                       <option value="stretch">Stretch</option>
                       <option value="flex-start">Start</option>
@@ -472,7 +462,6 @@ export const Inspector: React.FC = () => {
                     </select>
                   </div>
 
-                  {/* Gap */}
                   <div>
                     <label className="block text-[11px] text-zinc-400 mb-1">
                       Gap ({effectiveStyles.gap || "0px"})
@@ -482,18 +471,17 @@ export const Inspector: React.FC = () => {
                       value={effectiveStyles.gap || ""}
                       onChange={(e) => handleStyleChange("gap", e.target.value)}
                       placeholder="16px"
-                      className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2 text-xs text-white focus:border-indigo-500 outline-none"
+                      className="w-full bg-[#050505] border border-white/10 rounded-lg p-2 text-xs text-white focus:border-indigo-500 outline-none"
                     />
                   </div>
                 </>
               )}
 
-              {/* Grid Columns */}
               {effectiveStyles.display === "grid" && (
                 <>
                   <div>
                     <label className="block text-[11px] text-zinc-400 mb-1">
-                      Grid Columns
+                      Grid Template Columns
                     </label>
                     <input
                       type="text"
@@ -502,28 +490,40 @@ export const Inspector: React.FC = () => {
                         handleStyleChange("gridTemplateColumns", e.target.value)
                       }
                       placeholder="repeat(2, minmax(0, 1fr))"
-                      className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2 text-xs text-white focus:border-indigo-500 outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[11px] text-zinc-400 mb-1">
-                      Grid Gap
-                    </label>
-                    <input
-                      type="text"
-                      value={effectiveStyles.gap || ""}
-                      onChange={(e) => handleStyleChange("gap", e.target.value)}
-                      placeholder="20px"
-                      className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2 text-xs text-white focus:border-indigo-500 outline-none"
+                      className="w-full bg-[#050505] border border-white/10 rounded-lg p-2 text-xs text-white focus:border-indigo-500 outline-none"
                     />
                   </div>
                 </>
               )}
+
+              {/* Dimensions */}
+              <div className="grid grid-cols-2 gap-2 pt-1">
+                <div>
+                  <label className="block text-[11px] text-zinc-400 mb-1">Width</label>
+                  <input
+                    type="text"
+                    value={effectiveStyles.width || ""}
+                    onChange={(e) => handleStyleChange("width", e.target.value)}
+                    placeholder="100% or auto"
+                    className="w-full bg-[#050505] border border-white/10 rounded-lg p-2 text-xs text-white focus:border-indigo-500 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] text-zinc-400 mb-1">Max Width</label>
+                  <input
+                    type="text"
+                    value={effectiveStyles.maxWidth || ""}
+                    onChange={(e) => handleStyleChange("maxWidth", e.target.value)}
+                    placeholder="1200px"
+                    className="w-full bg-[#050505] border border-white/10 rounded-lg p-2 text-xs text-white focus:border-indigo-500 outline-none"
+                  />
+                </div>
+              </div>
             </div>
           )}
         </div>
 
-        {/* SECTION 4: Spacing (Padding & Margin) */}
+        {/* SECTION 4: Visual Spacing (Box Model) */}
         <div className="p-4">
           <button
             onClick={() => toggleSection("spacing")}
@@ -531,7 +531,7 @@ export const Inspector: React.FC = () => {
           >
             <div className="flex items-center gap-2">
               <Box className="w-3.5 h-3.5 text-zinc-400" />
-              <span>Spacing & Dimensions</span>
+              <span>Box Model (Margin & Padding)</span>
             </div>
             {openSections.spacing ? (
               <ChevronUp className="w-3.5 h-3.5 text-zinc-500" />
@@ -542,7 +542,6 @@ export const Inspector: React.FC = () => {
 
           {openSections.spacing && (
             <div className="space-y-3">
-              {/* Padding */}
               <div>
                 <label className="block text-[11px] text-zinc-400 mb-1">
                   Padding (e.g. 24px or 20px 16px)
@@ -552,11 +551,10 @@ export const Inspector: React.FC = () => {
                   value={effectiveStyles.padding || ""}
                   onChange={(e) => handleStyleChange("padding", e.target.value)}
                   placeholder="24px"
-                  className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2 text-xs text-white focus:border-indigo-500 outline-none"
+                  className="w-full bg-[#050505] border border-white/10 rounded-lg p-2 text-xs text-white focus:border-indigo-500 outline-none"
                 />
               </div>
 
-              {/* Margin */}
               <div>
                 <label className="block text-[11px] text-zinc-400 mb-1">
                   Margin (e.g. 0px auto or 16px)
@@ -566,32 +564,8 @@ export const Inspector: React.FC = () => {
                   value={effectiveStyles.margin || ""}
                   onChange={(e) => handleStyleChange("margin", e.target.value)}
                   placeholder="0px auto"
-                  className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2 text-xs text-white focus:border-indigo-500 outline-none"
+                  className="w-full bg-[#050505] border border-white/10 rounded-lg p-2 text-xs text-white focus:border-indigo-500 outline-none"
                 />
-              </div>
-
-              {/* Dimensions */}
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="block text-[11px] text-zinc-400 mb-1">Width</label>
-                  <input
-                    type="text"
-                    value={effectiveStyles.width || ""}
-                    onChange={(e) => handleStyleChange("width", e.target.value)}
-                    placeholder="100% or auto"
-                    className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2 text-xs text-white focus:border-indigo-500 outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[11px] text-zinc-400 mb-1">Max Width</label>
-                  <input
-                    type="text"
-                    value={effectiveStyles.maxWidth || ""}
-                    onChange={(e) => handleStyleChange("maxWidth", e.target.value)}
-                    placeholder="1200px"
-                    className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2 text-xs text-white focus:border-indigo-500 outline-none"
-                  />
-                </div>
               </div>
             </div>
           )}
@@ -616,7 +590,6 @@ export const Inspector: React.FC = () => {
 
           {openSections.typography && (
             <div className="space-y-3">
-              {/* Font Size & Weight */}
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <label className="block text-[11px] text-zinc-400 mb-1">Font Size</label>
@@ -625,7 +598,7 @@ export const Inspector: React.FC = () => {
                     value={effectiveStyles.fontSize || ""}
                     onChange={(e) => handleStyleChange("fontSize", e.target.value)}
                     placeholder="16px"
-                    className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2 text-xs text-white focus:border-indigo-500 outline-none"
+                    className="w-full bg-[#050505] border border-white/10 rounded-lg p-2 text-xs text-white focus:border-indigo-500 outline-none"
                   />
                 </div>
                 <div>
@@ -635,7 +608,7 @@ export const Inspector: React.FC = () => {
                   <select
                     value={effectiveStyles.fontWeight || "400"}
                     onChange={(e) => handleStyleChange("fontWeight", e.target.value)}
-                    className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2 text-xs text-white focus:border-indigo-500 outline-none"
+                    className="w-full bg-[#050505] border border-white/10 rounded-lg p-2 text-xs text-white focus:border-indigo-500 outline-none"
                   >
                     <option value="400">Normal (400)</option>
                     <option value="500">Medium (500)</option>
@@ -646,10 +619,9 @@ export const Inspector: React.FC = () => {
                 </div>
               </div>
 
-              {/* Text Align */}
               <div>
                 <label className="block text-[11px] text-zinc-400 mb-1">Text Align</label>
-                <div className="grid grid-cols-4 gap-1 bg-zinc-900 p-1 rounded-lg border border-zinc-800">
+                <div className="grid grid-cols-4 gap-1 bg-[#050505] p-1 rounded-lg border border-white/10">
                   {["left", "center", "right", "justify"].map((align) => (
                     <button
                       key={align}
@@ -666,7 +638,6 @@ export const Inspector: React.FC = () => {
                 </div>
               </div>
 
-              {/* Text Color */}
               <div>
                 <label className="block text-[11px] text-zinc-400 mb-1">Text Color</label>
                 <div className="flex items-center gap-2">
@@ -678,14 +649,14 @@ export const Inspector: React.FC = () => {
                         : "#ffffff"
                     }
                     onChange={(e) => handleStyleChange("color", e.target.value)}
-                    className="w-8 h-8 rounded border border-zinc-800 bg-transparent cursor-pointer"
+                    className="w-8 h-8 rounded border border-white/10 bg-transparent cursor-pointer"
                   />
                   <input
                     type="text"
                     value={effectiveStyles.color || ""}
                     onChange={(e) => handleStyleChange("color", e.target.value)}
                     placeholder="#ffffff"
-                    className="flex-1 bg-zinc-900 border border-zinc-800 rounded-lg p-2 text-xs text-white focus:border-indigo-500 outline-none"
+                    className="flex-1 bg-[#050505] border border-white/10 rounded-lg p-2 text-xs text-white focus:border-indigo-500 outline-none"
                   />
                 </div>
               </div>
@@ -712,7 +683,6 @@ export const Inspector: React.FC = () => {
 
           {openSections.appearance && (
             <div className="space-y-3">
-              {/* Color Swatches */}
               <div>
                 <label className="block text-[11px] text-zinc-400 mb-1.5">
                   Color Presets
@@ -727,7 +697,7 @@ export const Inspector: React.FC = () => {
                         backgroundColor:
                           swatch.val === "transparent" ? "transparent" : swatch.val,
                       }}
-                      className="w-6 h-6 rounded-md border border-zinc-700 hover:scale-110 transition shadow-sm relative overflow-hidden"
+                      className="w-6 h-6 rounded-md border border-white/10 hover:scale-110 transition shadow-sm relative overflow-hidden"
                     >
                       {swatch.val === "transparent" && (
                         <div className="absolute inset-0 border-t border-red-500 rotate-45" />
@@ -737,7 +707,6 @@ export const Inspector: React.FC = () => {
                 </div>
               </div>
 
-              {/* Background Color Input */}
               <div>
                 <label className="block text-[11px] text-zinc-400 mb-1">
                   Custom Background
@@ -750,12 +719,12 @@ export const Inspector: React.FC = () => {
                       typeof effectiveStyles.backgroundColor === "string" &&
                       effectiveStyles.backgroundColor.startsWith("#")
                         ? effectiveStyles.backgroundColor
-                        : "#09090b"
+                        : "#0a0a0a"
                     }
                     onChange={(e) =>
                       handleStyleChange("backgroundColor", e.target.value)
                     }
-                    className="w-8 h-8 rounded border border-zinc-800 bg-transparent cursor-pointer"
+                    className="w-8 h-8 rounded border border-white/10 bg-transparent cursor-pointer"
                   />
                   <input
                     type="text"
@@ -763,13 +732,12 @@ export const Inspector: React.FC = () => {
                     onChange={(e) =>
                       handleStyleChange("backgroundColor", e.target.value)
                     }
-                    placeholder="#18181b or transparent"
-                    className="flex-1 bg-zinc-900 border border-zinc-800 rounded-lg p-2 text-xs text-white focus:border-indigo-500 outline-none"
+                    placeholder="#0a0a0a or transparent"
+                    className="flex-1 bg-[#050505] border border-white/10 rounded-lg p-2 text-xs text-white focus:border-indigo-500 outline-none"
                   />
                 </div>
               </div>
 
-              {/* Border Radius */}
               <div>
                 <label className="block text-[11px] text-zinc-400 mb-1">
                   Border Radius ({effectiveStyles.borderRadius || "0px"})
@@ -778,12 +746,11 @@ export const Inspector: React.FC = () => {
                   type="text"
                   value={effectiveStyles.borderRadius || ""}
                   onChange={(e) => handleStyleChange("borderRadius", e.target.value)}
-                  placeholder="12px or 9999px"
-                  className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2 text-xs text-white focus:border-indigo-500 outline-none"
+                  placeholder="14px or 9999px"
+                  className="w-full bg-[#050505] border border-white/10 rounded-lg p-2 text-xs text-white focus:border-indigo-500 outline-none"
                 />
               </div>
 
-              {/* Border */}
               <div>
                 <label className="block text-[11px] text-zinc-400 mb-1">
                   Border (Width, Style, Color)
@@ -792,8 +759,8 @@ export const Inspector: React.FC = () => {
                   type="text"
                   value={effectiveStyles.border || ""}
                   onChange={(e) => handleStyleChange("border", e.target.value)}
-                  placeholder="1px solid #27272a"
-                  className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2 text-xs text-white focus:border-indigo-500 outline-none"
+                  placeholder="1px solid rgba(255, 255, 255, 0.1)"
+                  className="w-full bg-[#050505] border border-white/10 rounded-lg p-2 text-xs text-white focus:border-indigo-500 outline-none"
                 />
               </div>
             </div>

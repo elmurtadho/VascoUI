@@ -1,8 +1,7 @@
 "use client";
 
-import React from "react";
-import { BuilderNode } from "@/types/builder";
-import { useBuilderStore } from "@/lib/store/useBuilderStore";
+import React, { useState } from "react";
+import { useBuilderStore, BuilderNode } from "@/store/useBuilderStore";
 import {
   Layers,
   Layout,
@@ -11,7 +10,6 @@ import {
   Type,
   MousePointerClick,
   Image as ImageIcon,
-  CreditCard,
   ChevronRight,
   ChevronDown,
   Trash2,
@@ -34,20 +32,19 @@ function getNodeIcon(type: string) {
       return <MousePointerClick className="w-3.5 h-3.5 text-indigo-400" />;
     case "image":
       return <ImageIcon className="w-3.5 h-3.5 text-pink-400" />;
-    case "card":
-      return <CreditCard className="w-3.5 h-3.5 text-cyan-400" />;
     default:
       return <Layout className="w-3.5 h-3.5 text-zinc-400" />;
   }
 }
 
 interface TreeItemProps {
-  node: BuilderNode;
+  nodeId: string;
   depth: number;
 }
 
-const TreeItem: React.FC<TreeItemProps> = ({ node, depth }) => {
-  const [isExpanded, setIsExpanded] = React.useState(true);
+const TreeItem: React.FC<TreeItemProps> = ({ nodeId, depth }) => {
+  const [isExpanded, setIsExpanded] = useState(true);
+  const node = useBuilderStore((state) => state.nodes[nodeId]);
   const {
     selectedNodeId,
     hoveredNodeId,
@@ -56,6 +53,8 @@ const TreeItem: React.FC<TreeItemProps> = ({ node, depth }) => {
     deleteNode,
     duplicateNode,
   } = useBuilderStore();
+
+  if (!node) return null;
 
   const isSelected = selectedNodeId === node.id;
   const isHovered = hoveredNodeId === node.id;
@@ -77,8 +76,8 @@ const TreeItem: React.FC<TreeItemProps> = ({ node, depth }) => {
           isSelected
             ? "bg-indigo-600/20 text-indigo-300 font-medium"
             : isHovered
-            ? "bg-zinc-800/80 text-zinc-200"
-            : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/40"
+            ? "bg-white/5 text-zinc-200"
+            : "text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.02]"
         }`}
       >
         <div className="flex items-center gap-1.5 overflow-hidden">
@@ -103,34 +102,36 @@ const TreeItem: React.FC<TreeItemProps> = ({ node, depth }) => {
           <span className="truncate max-w-[130px]">{node.name || node.type}</span>
         </div>
 
-        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-          <button
-            title="Duplicate"
-            onClick={(e) => {
-              e.stopPropagation();
-              duplicateNode(node.id);
-            }}
-            className="p-1 hover:text-indigo-400 text-zinc-400"
-          >
-            <Copy className="w-3 h-3" />
-          </button>
-          <button
-            title="Delete"
-            onClick={(e) => {
-              e.stopPropagation();
-              deleteNode(node.id);
-            }}
-            className="p-1 hover:text-red-400 text-zinc-400"
-          >
-            <Trash2 className="w-3 h-3" />
-          </button>
-        </div>
+        {node.type !== "root" && (
+          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <button
+              title="Duplicate"
+              onClick={(e) => {
+                e.stopPropagation();
+                duplicateNode(node.id);
+              }}
+              className="p-1 hover:text-indigo-400 text-zinc-400"
+            >
+              <Copy className="w-3 h-3" />
+            </button>
+            <button
+              title="Delete"
+              onClick={(e) => {
+                e.stopPropagation();
+                deleteNode(node.id);
+              }}
+              className="p-1 hover:text-red-400 text-zinc-400"
+            >
+              <Trash2 className="w-3 h-3" />
+            </button>
+          </div>
+        )}
       </div>
 
       {hasChildren && isExpanded && (
         <div className="flex flex-col">
-          {node.children.map((child) => (
-            <TreeItem key={child.id} node={child} depth={depth + 1} />
+          {node.children.map((childId) => (
+            <TreeItem key={childId} nodeId={childId} depth={depth + 1} />
           ))}
         </div>
       )}
@@ -139,20 +140,14 @@ const TreeItem: React.FC<TreeItemProps> = ({ node, depth }) => {
 };
 
 export const LayersTree: React.FC = () => {
-  const { nodes, selectNode } = useBuilderStore();
+  const { rootNodeId, selectNode } = useBuilderStore();
 
   return (
     <div
       className="flex flex-col h-full overflow-y-auto px-1 py-2"
       onClick={() => selectNode(null)}
     >
-      {nodes.length === 0 ? (
-        <div className="p-4 text-center text-xs text-zinc-500">
-          No elements on canvas. Drag or click elements to add.
-        </div>
-      ) : (
-        nodes.map((node) => <TreeItem key={node.id} node={node} depth={0} />)
-      )}
+      <TreeItem nodeId={rootNodeId} depth={0} />
     </div>
   );
 };

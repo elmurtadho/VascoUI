@@ -714,10 +714,81 @@ export const initialTemplateNodes: BuilderNode[] = [
 /**
  * Generates ready-to-run React JSX code export from the node tree
  */
-export function generateReactCode(nodes: BuilderNode[]): string {
+export function generateReactCode(inputNodes: any): string {
+  // If normalized Record<string, any>
+  if (inputNodes && !Array.isArray(inputNodes) && typeof inputNodes === "object") {
+    const nodesMap = inputNodes as Record<string, any>;
+    const rootNode = nodesMap["root"] || Object.values(nodesMap).find((n: any) => !n.parentId);
+    if (!rootNode) return "// No nodes found";
+
+    function renderNormalizedNode(nodeId: string, depth: number): string {
+      const node = nodesMap[nodeId];
+      if (!node) return "";
+      const indent = "  ".repeat(depth);
+      const styles = node.props?.styles?.desktop || node.styles?.desktop || {};
+      const styleString = JSON.stringify(styles, null, 2)
+        .split("\n")
+        .map((line: string, idx: number) => (idx === 0 ? line : indent + "  " + line))
+        .join("\n");
+
+      const childIds: string[] = Array.isArray(node.children) ? node.children : [];
+      const hasChildren = childIds.length > 0;
+
+      switch (node.type) {
+        case "heading": {
+          const Tag = node.props?.tag || "h2";
+          return `${indent}<${Tag} style={${styleString}}>${node.props?.content || ""}</${Tag}>`;
+        }
+        case "text": {
+          const Tag = node.props?.tag || "p";
+          return `${indent}<${Tag} style={${styleString}}>${node.props?.content || ""}</${Tag}>`;
+        }
+        case "button": {
+          return `${indent}<button style={${styleString}}>${node.props?.content || "Button"}</button>`;
+        }
+        case "image": {
+          return `${indent}<img src="${node.props?.src || ""}" alt="${node.props?.alt || ""}" style={${styleString}} />`;
+        }
+        case "root": {
+          return childIds
+            .map((cId) => renderNormalizedNode(cId, depth))
+            .filter(Boolean)
+            .join("\n\n");
+        }
+        default: {
+          const Tag = node.props?.tag || "div";
+          if (!hasChildren) {
+            return `${indent}<${Tag} style={${styleString}} />`;
+          }
+          const childrenCode = childIds
+            .map((cId) => renderNormalizedNode(cId, depth + 1))
+            .filter(Boolean)
+            .join("\n");
+          return `${indent}<${Tag} style={${styleString}}>\n${childrenCode}\n${indent}</${Tag}>`;
+        }
+      }
+    }
+
+    const body = renderNormalizedNode(rootNode.id, 2);
+
+    return `import React from "react";
+
+export default function ExportedPage() {
+  return (
+    <main style={{ minHeight: "100vh", backgroundColor: "#050505", color: "#fafafa", fontFamily: "sans-serif" }}>
+${body}
+    </main>
+  );
+}
+`;
+  }
+
+  // Fallback for array-based nodes
+  const nodes = (Array.isArray(inputNodes) ? inputNodes : []) as BuilderNode[];
+
   function renderNodeCode(node: BuilderNode, depth: number): string {
     const indent = "  ".repeat(depth);
-    const styles = node.styles.desktop || {};
+    const styles = node.styles?.desktop || {};
     const styleString = JSON.stringify(styles, null, 2)
       .split("\n")
       .map((line, idx) => (idx === 0 ? line : indent + "  " + line))
@@ -759,7 +830,7 @@ export function generateReactCode(nodes: BuilderNode[]): string {
 
 export default function ExportedPage() {
   return (
-    <main style={{ minHeight: "100vh", backgroundColor: "#09090b", color: "#fafafa", fontFamily: "sans-serif" }}>
+    <main style={{ minHeight: "100vh", backgroundColor: "#050505", color: "#fafafa", fontFamily: "sans-serif" }}>
 ${body}
     </main>
   );
@@ -776,10 +847,84 @@ function styleObjectToCssString(styles: Record<string, unknown>): string {
     .join(" ");
 }
 
-export function generateHtmlCode(nodes: BuilderNode[]): string {
+export function generateHtmlCode(inputNodes: any): string {
+  // If normalized Record<string, any>
+  if (inputNodes && !Array.isArray(inputNodes) && typeof inputNodes === "object") {
+    const nodesMap = inputNodes as Record<string, any>;
+    const rootNode = nodesMap["root"] || Object.values(nodesMap).find((n: any) => !n.parentId);
+    if (!rootNode) return "<!DOCTYPE html><html><body></body></html>";
+
+    function renderNormalizedHtml(nodeId: string, depth: number): string {
+      const node = nodesMap[nodeId];
+      if (!node) return "";
+      const indent = "  ".repeat(depth);
+      const styles = node.props?.styles?.desktop || node.styles?.desktop || {};
+      const css = styleObjectToCssString(styles as Record<string, unknown>);
+      const styleAttr = css ? ` style="${css}"` : "";
+
+      const childIds: string[] = Array.isArray(node.children) ? node.children : [];
+      const hasChildren = childIds.length > 0;
+
+      switch (node.type) {
+        case "heading": {
+          const Tag = node.props?.tag || "h2";
+          return `${indent}<${Tag}${styleAttr}>${node.props?.content || ""}</${Tag}>`;
+        }
+        case "text": {
+          const Tag = node.props?.tag || "p";
+          return `${indent}<${Tag}${styleAttr}>${node.props?.content || ""}</${Tag}>`;
+        }
+        case "button": {
+          return `${indent}<button${styleAttr}>${node.props?.content || "Button"}</button>`;
+        }
+        case "image": {
+          return `${indent}<img src="${node.props?.src || ""}" alt="${node.props?.alt || ""}"${styleAttr} />`;
+        }
+        case "root": {
+          return childIds
+            .map((cId) => renderNormalizedHtml(cId, depth))
+            .filter(Boolean)
+            .join("\n");
+        }
+        default: {
+          const Tag = node.props?.tag || "div";
+          if (!hasChildren) {
+            return `${indent}<${Tag}${styleAttr}></${Tag}>`;
+          }
+          const inner = childIds
+            .map((cId) => renderNormalizedHtml(cId, depth + 1))
+            .filter(Boolean)
+            .join("\n");
+          return `${indent}<${Tag}${styleAttr}>\n${inner}\n${indent}</${Tag}>`;
+        }
+      }
+    }
+
+    const innerHtml = renderNormalizedHtml(rootNode.id, 2);
+
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vasco Exported Page</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #050505; color: #fafafa; }
+  </style>
+</head>
+<body>
+${innerHtml}
+</body>
+</html>`;
+  }
+
+  // Fallback for array-based nodes
+  const nodes = (Array.isArray(inputNodes) ? inputNodes : []) as BuilderNode[];
+
   function renderHtmlNode(node: BuilderNode, depth: number): string {
     const indent = "  ".repeat(depth);
-    const styles = node.styles.desktop || {};
+    const styles = node.styles?.desktop || {};
     const css = styleObjectToCssString(styles as Record<string, unknown>);
     const styleAttr = css ? ` style="${css}"` : "";
 
@@ -820,7 +965,7 @@ export function generateHtmlCode(nodes: BuilderNode[]): string {
   <title>Vasco Exported Page</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #09090b; color: #fafafa; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #050505; color: #fafafa; }
   </style>
 </head>
 <body>

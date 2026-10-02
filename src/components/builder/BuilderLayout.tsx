@@ -10,12 +10,11 @@ import {
   DragStartEvent,
   DragEndEvent,
 } from "@dnd-kit/core";
-import { TopBar } from "./TopBar";
+import { ProjectTopbar } from "./ProjectTopbar";
 import { Sidebar } from "./Sidebar";
 import { Canvas } from "./Canvas";
 import { Inspector } from "./Inspector";
-import { useBuilderStore } from "@/lib/store/useBuilderStore";
-import { NodeType } from "@/types/builder";
+import { useBuilderStore, NodeType } from "@/store/useBuilderStore";
 import { Sparkles } from "lucide-react";
 
 interface BuilderLayoutProps {
@@ -83,9 +82,9 @@ export const BuilderLayout: React.FC<BuilderLayoutProps> = ({ onSave }) => {
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <div className="flex flex-col h-screen w-screen bg-zinc-950 text-zinc-100 overflow-hidden select-none">
+      <div className="flex flex-col h-screen w-screen bg-[#050505] text-zinc-100 overflow-hidden select-none">
         {/* Top Navigation Bar */}
-        <TopBar onSave={onSave} />
+        <ProjectTopbar onSave={onSave} />
 
         {/* Main Work Area: Left Sidebar, Center Canvas, Right Inspector */}
         <div className="flex-1 flex flex-row overflow-hidden relative">
