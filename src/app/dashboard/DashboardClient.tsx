@@ -15,6 +15,9 @@ import {
   FolderOpen,
   Loader2,
   Code2,
+  Wand2,
+  ArrowRight,
+  Bot,
 } from "lucide-react";
 import { createProjectAction, deleteProjectAction } from "@/app/actions/project";
 
@@ -74,9 +77,9 @@ export const DashboardClient: React.FC<DashboardClientProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-[#050505] text-zinc-100 flex flex-col font-sans">
+    <div className="min-h-screen bg-[#000000] text-zinc-100 flex flex-col font-sans selection:bg-indigo-500/30">
       {/* Top Bar */}
-      <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-[#050505]/80 backdrop-blur-xl">
+      <header className="sticky top-0 z-50 w-full border-b border-white/[0.08] bg-[#000000]/80 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           {/* Logo & Breadcrumb */}
           <div className="flex items-center gap-3">
@@ -89,7 +92,7 @@ export const DashboardClient: React.FC<DashboardClientProps> = ({
               </span>
             </Link>
             <span className="text-zinc-600">/</span>
-            <span className="text-xs font-semibold text-zinc-300">
+            <span className="text-xs font-semibold text-zinc-400">
               Workspace Dashboard
             </span>
           </div>
@@ -121,23 +124,23 @@ export const DashboardClient: React.FC<DashboardClientProps> = ({
               Projects
             </h1>
             <p className="text-xs sm:text-sm text-zinc-400 mt-1">
-              Create, design, and manage your responsive visual websites.
+              Create, design, and manage your AI-native responsive websites.
             </p>
           </div>
 
           <button
             onClick={handleCreateProject}
             disabled={isCreating}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/25 hover:shadow-indigo-600/40 transition disabled:opacity-50"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-semibold bg-white hover:bg-zinc-200 text-black shadow-lg hover:shadow-white/10 transition disabled:opacity-50"
           >
             {isCreating ? (
               <>
-                <Loader2 className="w-4 h-4 animate-spin" />
+                <Loader2 className="w-4 h-4 animate-spin text-black" />
                 <span>Creating Project...</span>
               </>
             ) : (
               <>
-                <Plus className="w-4 h-4" />
+                <Plus className="w-4 h-4 text-black" />
                 <span>Create New Project</span>
               </>
             )}
@@ -146,22 +149,22 @@ export const DashboardClient: React.FC<DashboardClientProps> = ({
 
         {/* Projects Grid */}
         {projectsList.length === 0 ? (
-          <div className="flex flex-col items-center justify-center p-16 rounded-2xl border border-dashed border-white/10 bg-[#0a0a0a] text-center my-8">
-            <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-4 text-zinc-400">
+          <div className="flex flex-col items-center justify-center p-16 rounded-2xl border border-dashed border-white/[0.08] bg-[#050505] text-center my-8">
+            <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/[0.08] flex items-center justify-center mb-4 text-zinc-400">
               <FolderOpen className="w-7 h-7 stroke-[1.5]" />
             </div>
             <h3 className="text-base font-semibold text-white mb-1">
               No projects yet
             </h3>
             <p className="text-xs text-zinc-400 max-w-sm mb-6 leading-relaxed">
-              Create your first project to start crafting with responsive breakpoints and live Turso database persistence.
+              Create your first project to experience the AI-prompt layout engine and live responsive builder.
             </p>
             <button
               onClick={handleCreateProject}
               disabled={isCreating}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/25 transition"
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-semibold bg-white hover:bg-zinc-200 text-black shadow-lg transition"
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="w-4 h-4 text-black" />
               <span>Create Your First Project</span>
             </button>
           </div>
@@ -171,17 +174,32 @@ export const DashboardClient: React.FC<DashboardClientProps> = ({
               <div
                 key={project.id}
                 onClick={() => router.push(`/project/${project.id}`)}
-                className="group relative flex flex-col rounded-2xl border border-white/10 bg-[#0a0a0a] hover:border-indigo-500/50 hover:bg-zinc-900/60 p-5 transition-all shadow-xl cursor-pointer select-none"
+                className="group relative flex flex-col rounded-2xl border border-white/[0.08] bg-[#050505] hover:border-indigo-500/40 hover:bg-[#0a0a0a] p-5 transition-all shadow-xl cursor-pointer select-none"
               >
                 {/* Card Canvas Thumbnail Representation */}
                 <div
-                  className="w-full h-36 rounded-xl bg-[#050505] border border-white/10 flex flex-col items-center justify-center p-4 mb-4 relative overflow-hidden group-hover:scale-[1.01] transition-transform"
+                  className="w-full h-36 rounded-xl bg-[#000000] border border-white/[0.08] flex flex-col items-center justify-center p-4 mb-4 relative overflow-hidden group-hover:scale-[1.01] transition-transform"
                   style={{
                     backgroundImage:
                       "radial-gradient(circle, rgba(255, 255, 255, 0.08) 1px, transparent 1px)",
                     backgroundSize: "14px 14px",
                   }}
                 >
+                  {/* Status Badge in corner */}
+                  <div className="absolute top-2.5 right-2.5 z-10">
+                    {project.isGenerated ? (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 shadow-sm">
+                        <Sparkles className="w-2.5 h-2.5 text-indigo-400" />
+                        Ready
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20 shadow-sm">
+                        <Bot className="w-2.5 h-2.5 text-amber-400" />
+                        AI Draft
+                      </span>
+                    )}
+                  </div>
+
                   <div className="flex flex-col items-center gap-2 text-center pointer-events-none">
                     <div className="w-8 h-8 rounded-lg bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 flex items-center justify-center">
                       <Code2 className="w-4 h-4" />
@@ -196,9 +214,9 @@ export const DashboardClient: React.FC<DashboardClientProps> = ({
 
                   {/* Hover action overlay pill */}
                   <div className="absolute inset-0 bg-indigo-950/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity backdrop-blur-[2px]">
-                    <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-semibold shadow-lg">
-                      <span>Open Builder</span>
-                      <ExternalLink className="w-3.5 h-3.5" />
+                    <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white text-black text-xs font-semibold shadow-lg">
+                      <span>{project.isGenerated ? "Open Canvas" : "Setup with AI"}</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
                     </span>
                   </div>
                 </div>
@@ -222,8 +240,19 @@ export const DashboardClient: React.FC<DashboardClientProps> = ({
                   </button>
                 </div>
 
+                {/* Prompt Excerpt if available */}
+                {project.prompt ? (
+                  <p className="text-xs text-zinc-400 line-clamp-2 italic mb-3">
+                    &ldquo;{project.prompt}&rdquo;
+                  </p>
+                ) : (
+                  <p className="text-xs text-zinc-600 italic mb-3">
+                    No prompt specified &bull; Ready for design
+                  </p>
+                )}
+
                 {/* Metadata Footer */}
-                <div className="mt-auto pt-3 border-t border-white/5 flex items-center justify-between text-[11px] text-zinc-500">
+                <div className="mt-auto pt-3 border-t border-white/[0.06] flex items-center justify-between text-[11px] text-zinc-500">
                   <div className="flex items-center gap-1.5">
                     <Clock className="w-3.5 h-3.5" />
                     <span>

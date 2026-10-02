@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { CodeExportModal } from "./CodeExportModal";
 import { ShortcutsModal } from "./ShortcutsModal";
+import { AiPromptModal } from "./AiPromptModal";
 
 interface ProjectTopbarProps {
   onSave?: () => Promise<void>;
@@ -46,6 +47,7 @@ export const ProjectTopbar: React.FC<ProjectTopbarProps> = ({ onSave }) => {
 
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
+  const [isAiPromptOpen, setIsAiPromptOpen] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
 
   const handleSave = async () => {
@@ -201,6 +203,15 @@ export const ProjectTopbar: React.FC<ProjectTopbarProps> = ({ onSave }) => {
           </button>
 
           <button
+            onClick={() => setIsAiPromptOpen(true)}
+            title="Generate or Prompt with AI"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-gradient-to-r from-indigo-500/15 to-purple-500/15 border border-indigo-500/30 text-indigo-300 hover:text-white hover:border-indigo-500/60 transition shadow-sm"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+            <span className="hidden sm:inline">AI Prompt</span>
+          </button>
+
+          <button
             onClick={() => setIsExportOpen(true)}
             className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold border border-white/10 hover:bg-white/5 text-zinc-200 hover:text-white transition"
           >
@@ -250,6 +261,11 @@ export const ProjectTopbar: React.FC<ProjectTopbarProps> = ({ onSave }) => {
           </div>
         </div>
       </header>
+
+      <AiPromptModal
+        isOpen={isAiPromptOpen}
+        onClose={() => setIsAiPromptOpen(false)}
+      />
 
       <CodeExportModal
         isOpen={isExportOpen}

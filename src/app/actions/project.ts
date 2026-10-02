@@ -17,18 +17,33 @@ async function ensureTableExists() {
         id TEXT PRIMARY KEY,
         user_id TEXT NOT NULL,
         name TEXT NOT NULL,
+        prompt TEXT,
+        is_generated INTEGER NOT NULL DEFAULT 0,
         canvas_data TEXT NOT NULL,
         created_at INTEGER NOT NULL,
         updated_at INTEGER NOT NULL
       );
     `);
+    try {
+      await client.execute(`ALTER TABLE projects ADD COLUMN prompt TEXT;`);
+    } catch {
+      // Column already exists
+    }
+    try {
+      await client.execute(`ALTER TABLE projects ADD COLUMN is_generated INTEGER NOT NULL DEFAULT 0;`);
+    } catch {
+      // Column already exists
+    }
     tableInitialized = true;
   } catch (err) {
     console.error("Error ensuring projects table exists:", err);
   }
 }
 
-export async function createProjectAction(name: string = "New Project") {
+export async function createProjectAction(
+  name: string = "New AI Project",
+  prompt?: string
+) {
   const { userId } = await auth();
   if (!userId) {
     throw new Error("Unauthorized");
@@ -43,6 +58,8 @@ export async function createProjectAction(name: string = "New Project") {
     id,
     userId,
     name,
+    prompt: prompt || null,
+    isGenerated: false,
     canvasData: JSON.stringify(initialNormalizedNodes),
     createdAt: now,
     updatedAt: now,
@@ -55,7 +72,9 @@ export async function createProjectAction(name: string = "New Project") {
 export async function saveProjectAction(
   id: string,
   name: string,
-  canvasData: string
+  canvasData: string,
+  isGenerated?: boolean,
+  prompt?: string
 ) {
   const { userId } = await auth();
   if (!userId) {
@@ -71,12 +90,27 @@ export async function saveProjectAction(
       .from(projects)
       .where(and(eq(projects.id, id), eq(projects.userId, userId)));
 
+    const updateFields: Record<string, unknown> = {
+      name,
+      canvasData,
+      updatedAt: now,
+    };
+
+    if (typeof isGenerated === "boolean") {
+      updateFields.isGenerated = isGenerated;
+    }
+    if (typeof prompt === "string") {
+      updateFields.prompt = prompt;
+    }
+
     if (existing.length === 0) {
       // Insert new project if it doesn't exist yet
       await db.insert(projects).values({
         id,
         userId,
         name,
+        prompt: prompt || null,
+        isGenerated: isGenerated ?? false,
         canvasData,
         createdAt: now,
         updatedAt: now,
@@ -85,14 +119,11 @@ export async function saveProjectAction(
       // Update existing
       await db
         .update(projects)
-        .set({
-          name,
-          canvasData,
-          updatedAt: now,
-        })
+        .set(updateFields)
         .where(and(eq(projects.id, id), eq(projects.userId, userId)));
     }
 
+    revalidatePath(`/project/${id}`);
     revalidatePath("/dashboard");
     return { success: true };
   } catch (error) {
@@ -100,6 +131,42 @@ export async function saveProjectAction(
     return {
       success: false,
       error: error instanceof Error ? error.message : "Failed to save project",
+    };
+  }
+}
+
+export async function updateProjectAiAction(
+  id: string,
+  prompt: string,
+  canvasData: string
+) {
+  const { userId } = await auth();
+  if (!userId) {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  await ensureTableExists();
+  const now = new Date();
+
+  try {
+    await db
+      .update(projects)
+      .set({
+        prompt,
+        isGenerated: true,
+        canvasData,
+        updatedAt: now,
+      })
+      .where(and(eq(projects.id, id), eq(projects.userId, userId)));
+
+    revalidatePath(`/project/${id}`);
+    revalidatePath("/dashboard");
+    return { success: true };
+  } catch (error) {
+    console.error("updateProjectAiAction error:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to update project",
     };
   }
 }
