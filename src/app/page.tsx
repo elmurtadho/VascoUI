@@ -110,7 +110,7 @@ export default function BuilderPage() {
       <div className="flex flex-col items-center justify-center h-screen w-screen bg-zinc-950 text-white">
         <Loader2 className="w-8 h-8 animate-spin text-indigo-500 mb-3" />
         <span className="text-xs font-medium text-zinc-400">
-          Loading Vasco Sleek Builder...
+          Loading Vasco Studio...
         </span>
       </div>
     );

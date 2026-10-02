@@ -17,6 +17,9 @@ import {
   Smartphone,
   Tablet,
   Monitor,
+  ArrowUp,
+  ArrowDown,
+  Wand2,
 } from "lucide-react";
 
 export const Inspector: React.FC = () => {
@@ -28,16 +31,18 @@ export const Inspector: React.FC = () => {
     updateNodeStyles,
     deleteNode,
     duplicateNode,
+    moveNodeUp,
+    moveNodeDown,
   } = useBuilderStore();
 
   // Accordion state
   const [openSections, setOpenSections] = useState({
     props: true,
+    presets: true,
     layout: true,
     spacing: true,
     typography: true,
     appearance: true,
-    borders: false,
   });
 
   const toggleSection = (section: keyof typeof openSections) => {
@@ -49,23 +54,21 @@ export const Inspector: React.FC = () => {
   if (!selectedNode) {
     return (
       <aside className="w-80 bg-zinc-950 border-l border-zinc-800/80 flex flex-col items-center justify-center p-6 text-center select-none z-20">
-        <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-zinc-900 border border-zinc-800 text-zinc-600 mb-4">
+        <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-zinc-900 border border-zinc-800 text-zinc-500 mb-4 shadow-inner">
           <SlidersHorizontal className="w-6 h-6 stroke-[1.5]" />
         </div>
-        <h3 className="text-xs font-semibold text-zinc-300 mb-1">
+        <h3 className="text-xs font-semibold text-zinc-200 mb-1">
           No Element Selected
         </h3>
-        <p className="text-[11px] text-zinc-500 max-w-[200px]">
-          Click on any element on the canvas to inspect and edit its styles for the{" "}
-          <strong className="text-zinc-400 capitalize">{currentDevice}</strong>{" "}
-          breakpoint.
+        <p className="text-[11px] text-zinc-500 max-w-[210px] leading-relaxed">
+          Click or double-click any component on the canvas to inspect and customize its styles for the{" "}
+          <strong className="text-indigo-400 capitalize">{currentDevice}</strong> breakpoint.
         </p>
       </aside>
     );
   }
 
   const effectiveStyles = computeEffectiveStyles(selectedNode, currentDevice);
-  const currentDeviceStyles = selectedNode.styles[currentDevice] || {};
 
   const handleStyleChange = (key: keyof React.CSSProperties, value: unknown) => {
     updateNodeStyles(selectedNode.id, { [key]: value }, currentDevice);
@@ -83,31 +86,104 @@ export const Inspector: React.FC = () => {
     }
   };
 
+  // Preset Layout Quick Actions
+  const applyPresetLayout = (preset: "center" | "row-between" | "vertical-stack" | "grid-2" | "grid-3") => {
+    switch (preset) {
+      case "center":
+        updateNodeStyles(selectedNode.id, {
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          textAlign: "center",
+        });
+        break;
+      case "row-between":
+        updateNodeStyles(selectedNode.id, {
+          display: "flex",
+          flexDirection: "row",
+          justifyContent: "space-between",
+          alignItems: "center",
+        });
+        break;
+      case "vertical-stack":
+        updateNodeStyles(selectedNode.id, {
+          display: "flex",
+          flexDirection: "column",
+          gap: "16px",
+          alignItems: "stretch",
+        });
+        break;
+      case "grid-2":
+        updateNodeStyles(selectedNode.id, {
+          display: "grid",
+          gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+          gap: "20px",
+        });
+        break;
+      case "grid-3":
+        updateNodeStyles(selectedNode.id, {
+          display: "grid",
+          gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+          gap: "24px",
+        });
+        break;
+    }
+  };
+
+  // Color Swatches
+  const colorSwatches = [
+    { name: "Transparent", val: "transparent" },
+    { name: "Pure Black", val: "#000000" },
+    { name: "Zinc 950", val: "#09090b" },
+    { name: "Zinc 900", val: "#18181b" },
+    { name: "Zinc 800", val: "#27272a" },
+    { name: "Indigo", val: "#6366f1" },
+    { name: "Emerald", val: "#10b981" },
+    { name: "Rose", val: "#f43f5e" },
+    { name: "Amber", val: "#f59e0b" },
+    { name: "White", val: "#ffffff" },
+  ];
+
   return (
     <aside className="w-80 bg-zinc-950 border-l border-zinc-800/80 flex flex-col h-full select-none z-20 overflow-y-auto">
       {/* Node Header & Actions */}
-      <div className="p-4 border-b border-zinc-800/80 bg-zinc-900/30">
-        <div className="flex items-center justify-between mb-2">
+      <div className="p-4 border-b border-zinc-800/80 bg-zinc-900/40">
+        <div className="flex items-center justify-between mb-2.5">
           <div className="flex items-center gap-2">
             <span className="text-xs font-bold text-white uppercase tracking-wider">
               {selectedNode.type}
             </span>
             <span className="text-[10px] text-zinc-500 font-mono">
-              #{selectedNode.id.substring(0, 8)}
+              #{selectedNode.id.substring(0, 7)}
             </span>
           </div>
           <div className="flex items-center gap-1">
             <button
+              onClick={() => moveNodeUp(selectedNode.id)}
+              title="Move Up"
+              className="p-1 rounded-md hover:bg-zinc-800 text-zinc-400 hover:text-white transition"
+            >
+              <ArrowUp className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onClick={() => moveNodeDown(selectedNode.id)}
+              title="Move Down"
+              className="p-1 rounded-md hover:bg-zinc-800 text-zinc-400 hover:text-white transition"
+            >
+              <ArrowDown className="w-3.5 h-3.5" />
+            </button>
+            <button
               onClick={() => duplicateNode(selectedNode.id)}
-              title="Duplicate Element"
-              className="p-1 rounded hover:bg-zinc-800 text-zinc-400 hover:text-white transition"
+              title="Duplicate"
+              className="p-1 rounded-md hover:bg-zinc-800 text-zinc-400 hover:text-white transition"
             >
               <Copy className="w-3.5 h-3.5" />
             </button>
             <button
               onClick={() => deleteNode(selectedNode.id)}
-              title="Delete Element"
-              className="p-1 rounded hover:bg-zinc-800 text-zinc-400 hover:text-red-400 transition"
+              title="Delete"
+              className="p-1 rounded-md hover:bg-zinc-800 text-zinc-400 hover:text-red-400 transition"
             >
               <Trash2 className="w-3.5 h-3.5" />
             </button>
@@ -115,11 +191,14 @@ export const Inspector: React.FC = () => {
         </div>
 
         {/* Breakpoint Notice Banner */}
-        <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-indigo-950/40 border border-indigo-800/40 text-[11px] text-indigo-300">
-          {getDeviceIcon()}
-          <span>
-            Editing <strong className="capitalize">{currentDevice}</strong> styles
-          </span>
+        <div className="flex items-center justify-between px-3 py-1.5 rounded-lg bg-indigo-950/40 border border-indigo-800/40 text-[11px] text-indigo-300">
+          <div className="flex items-center gap-2">
+            {getDeviceIcon()}
+            <span>
+              Target Breakpoint: <strong className="capitalize text-white">{currentDevice}</strong>
+            </span>
+          </div>
+          <span className="text-[10px] text-indigo-400 font-medium">Auto Cascades</span>
         </div>
       </div>
 
@@ -132,7 +211,7 @@ export const Inspector: React.FC = () => {
           >
             <div className="flex items-center gap-2">
               <ExternalLink className="w-3.5 h-3.5 text-zinc-400" />
-              <span>Element Properties</span>
+              <span>Element Content</span>
             </div>
             {openSections.props ? (
               <ChevronUp className="w-3.5 h-3.5 text-zinc-500" />
@@ -147,7 +226,7 @@ export const Inspector: React.FC = () => {
               {["heading", "text", "button"].includes(selectedNode.type) && (
                 <div>
                   <label className="block text-[11px] text-zinc-400 mb-1">
-                    Text Content
+                    Text (Double click on canvas to edit directly)
                   </label>
                   <textarea
                     rows={2}
@@ -238,7 +317,56 @@ export const Inspector: React.FC = () => {
           )}
         </div>
 
-        {/* SECTION 2: Layout (Display, Flex, Grid) */}
+        {/* SECTION 2: Quick Layout Presets (For containers) */}
+        {["container", "section", "card"].includes(selectedNode.type) && (
+          <div className="p-4">
+            <button
+              onClick={() => toggleSection("presets")}
+              className="flex items-center justify-between w-full text-zinc-300 font-semibold mb-3 hover:text-white"
+            >
+              <div className="flex items-center gap-2">
+                <Wand2 className="w-3.5 h-3.5 text-indigo-400" />
+                <span>Layout Presets</span>
+              </div>
+              {openSections.presets ? (
+                <ChevronUp className="w-3.5 h-3.5 text-zinc-500" />
+              ) : (
+                <ChevronDown className="w-3.5 h-3.5 text-zinc-500" />
+              )}
+            </button>
+
+            {openSections.presets && (
+              <div className="grid grid-cols-2 gap-1.5">
+                <button
+                  onClick={() => applyPresetLayout("center")}
+                  className="p-2 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-left text-[11px] text-zinc-300 hover:text-white transition"
+                >
+                  🎯 Center All
+                </button>
+                <button
+                  onClick={() => applyPresetLayout("row-between")}
+                  className="p-2 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-left text-[11px] text-zinc-300 hover:text-white transition"
+                >
+                  ↔ Space Between
+                </button>
+                <button
+                  onClick={() => applyPresetLayout("vertical-stack")}
+                  className="p-2 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-left text-[11px] text-zinc-300 hover:text-white transition"
+                >
+                  ☰ Vertical Stack
+                </button>
+                <button
+                  onClick={() => applyPresetLayout("grid-2")}
+                  className="p-2 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-left text-[11px] text-zinc-300 hover:text-white transition"
+                >
+                  ⊞ 2-Col Grid
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* SECTION 3: Layout & Flexbox */}
         <div className="p-4">
           <button
             onClick={() => toggleSection("layout")}
@@ -246,7 +374,7 @@ export const Inspector: React.FC = () => {
           >
             <div className="flex items-center gap-2">
               <Layout className="w-3.5 h-3.5 text-zinc-400" />
-              <span>Layout & Flexbox</span>
+              <span>Layout & Display</span>
             </div>
             {openSections.layout ? (
               <ChevronUp className="w-3.5 h-3.5 text-zinc-500" />
@@ -287,8 +415,8 @@ export const Inspector: React.FC = () => {
                     </label>
                     <div className="grid grid-cols-2 gap-1 bg-zinc-900 p-1 rounded-lg border border-zinc-800">
                       {[
-                        { label: "Row", val: "row" },
-                        { label: "Column", val: "column" },
+                        { label: "Row (Horizontal)", val: "row" },
+                        { label: "Column (Vertical)", val: "column" },
                       ].map((item) => (
                         <button
                           key={item.val}
@@ -365,7 +493,7 @@ export const Inspector: React.FC = () => {
                 <>
                   <div>
                     <label className="block text-[11px] text-zinc-400 mb-1">
-                      Grid Template Columns
+                      Grid Columns
                     </label>
                     <input
                       type="text"
@@ -395,7 +523,7 @@ export const Inspector: React.FC = () => {
           )}
         </div>
 
-        {/* SECTION 3: Spacing (Padding & Margin) */}
+        {/* SECTION 4: Spacing (Padding & Margin) */}
         <div className="p-4">
           <button
             onClick={() => toggleSection("spacing")}
@@ -469,7 +597,7 @@ export const Inspector: React.FC = () => {
           )}
         </div>
 
-        {/* SECTION 4: Typography */}
+        {/* SECTION 5: Typography */}
         <div className="p-4">
           <button
             onClick={() => toggleSection("typography")}
@@ -565,7 +693,7 @@ export const Inspector: React.FC = () => {
           )}
         </div>
 
-        {/* SECTION 5: Background & Appearance */}
+        {/* SECTION 6: Background, Palette & Borders */}
         <div className="p-4">
           <button
             onClick={() => toggleSection("appearance")}
@@ -584,19 +712,45 @@ export const Inspector: React.FC = () => {
 
           {openSections.appearance && (
             <div className="space-y-3">
-              {/* Background Color */}
+              {/* Color Swatches */}
+              <div>
+                <label className="block text-[11px] text-zinc-400 mb-1.5">
+                  Color Presets
+                </label>
+                <div className="flex flex-wrap gap-1.5">
+                  {colorSwatches.map((swatch) => (
+                    <button
+                      key={swatch.val}
+                      onClick={() => handleStyleChange("backgroundColor", swatch.val)}
+                      title={swatch.name}
+                      style={{
+                        backgroundColor:
+                          swatch.val === "transparent" ? "transparent" : swatch.val,
+                      }}
+                      className="w-6 h-6 rounded-md border border-zinc-700 hover:scale-110 transition shadow-sm relative overflow-hidden"
+                    >
+                      {swatch.val === "transparent" && (
+                        <div className="absolute inset-0 border-t border-red-500 rotate-45" />
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Background Color Input */}
               <div>
                 <label className="block text-[11px] text-zinc-400 mb-1">
-                  Background Color
+                  Custom Background
                 </label>
                 <div className="flex items-center gap-2">
                   <input
                     type="color"
                     value={
                       effectiveStyles.backgroundColor &&
-                      typeof effectiveStyles.backgroundColor === "string"
+                      typeof effectiveStyles.backgroundColor === "string" &&
+                      effectiveStyles.backgroundColor.startsWith("#")
                         ? effectiveStyles.backgroundColor
-                        : "#000000"
+                        : "#09090b"
                     }
                     onChange={(e) =>
                       handleStyleChange("backgroundColor", e.target.value)
@@ -609,7 +763,7 @@ export const Inspector: React.FC = () => {
                     onChange={(e) =>
                       handleStyleChange("backgroundColor", e.target.value)
                     }
-                    placeholder="transparent or #18181b"
+                    placeholder="#18181b or transparent"
                     className="flex-1 bg-zinc-900 border border-zinc-800 rounded-lg p-2 text-xs text-white focus:border-indigo-500 outline-none"
                   />
                 </div>
@@ -624,7 +778,7 @@ export const Inspector: React.FC = () => {
                   type="text"
                   value={effectiveStyles.borderRadius || ""}
                   onChange={(e) => handleStyleChange("borderRadius", e.target.value)}
-                  placeholder="8px or 9999px"
+                  placeholder="12px or 9999px"
                   className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2 text-xs text-white focus:border-indigo-500 outline-none"
                 />
               </div>

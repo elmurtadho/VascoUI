@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Vasco Sleek - Visual Page Builder",
+  title: "Vasco Studio - Visual Page Builder",
   description:
     "Next.js production-grade visual UI builder with responsive breakpoints, Turso edge database persistence, and direct Vercel deployment.",
 };

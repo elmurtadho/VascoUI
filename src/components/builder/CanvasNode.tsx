@@ -1,12 +1,19 @@
 "use client";
 
-import React from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { BuilderNode, Device } from "@/types/builder";
 import { computeEffectiveStyles } from "@/lib/builder/utils";
 import { useBuilderStore } from "@/lib/store/useBuilderStore";
 import { RecursiveRenderer } from "./RecursiveRenderer";
 import { useDroppable } from "@dnd-kit/core";
-import { Copy, Trash2, ArrowUp, Plus } from "lucide-react";
+import {
+  Copy,
+  Trash2,
+  ArrowUp,
+  ArrowDown,
+  Plus,
+  ChevronUp,
+} from "lucide-react";
 
 interface CanvasNodeProps {
   node: BuilderNode;
@@ -22,7 +29,14 @@ export const CanvasNode: React.FC<CanvasNodeProps> = ({ node, device }) => {
     setHoveredNode,
     deleteNode,
     duplicateNode,
+    moveNodeUp,
+    moveNodeDown,
+    updateNodeProps,
   } = useBuilderStore();
+
+  const [isEditingInline, setIsEditingInline] = useState(false);
+  const [inlineValue, setInlineValue] = useState(node.props.content || "");
+  const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
 
   const isSelected = selectedNodeId === node.id && !previewMode;
   const isHovered = hoveredNodeId === node.id && !isSelected && !previewMode;
@@ -30,6 +44,19 @@ export const CanvasNode: React.FC<CanvasNodeProps> = ({ node, device }) => {
   const isContainerType = ["container", "section", "grid", "card"].includes(
     node.type
   );
+
+  // Focus input when inline editing starts
+  useEffect(() => {
+    if (isEditingInline && inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select();
+    }
+  }, [isEditingInline]);
+
+  // Keep inline value in sync when props change
+  useEffect(() => {
+    setInlineValue(node.props.content || "");
+  }, [node.props.content]);
 
   // Droppable hook for nesting elements
   const { setNodeRef, isOver } = useDroppable({
@@ -47,6 +74,31 @@ export const CanvasNode: React.FC<CanvasNodeProps> = ({ node, device }) => {
     if (previewMode) return;
     e.stopPropagation();
     selectNode(node.id);
+  };
+
+  const handleDoubleClick = (e: React.MouseEvent) => {
+    if (previewMode) return;
+    e.stopPropagation();
+    if (["heading", "text", "button"].includes(node.type)) {
+      setIsEditingInline(true);
+    }
+  };
+
+  const handleInlineBlur = () => {
+    setIsEditingInline(false);
+    updateNodeProps(node.id, { content: inlineValue });
+  };
+
+  const handleInlineKeyDown = (
+    e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleInlineBlur();
+    } else if (e.key === "Escape") {
+      setIsEditingInline(false);
+      setInlineValue(node.props.content || "");
+    }
   };
 
   const handleMouseEnter = (e: React.MouseEvent) => {
@@ -84,6 +136,7 @@ export const CanvasNode: React.FC<CanvasNodeProps> = ({ node, device }) => {
           ? "1px dashed #64748b"
           : "none",
         outlineOffset: "-1px",
+        transition: "outline 0.15s ease",
       }
     : {};
 
@@ -97,30 +150,56 @@ export const CanvasNode: React.FC<CanvasNodeProps> = ({ node, device }) => {
 
     return (
       <div
-        className="absolute -top-7 left-0 z-50 flex items-center gap-1.5 px-2 py-0.5 rounded-t text-xs font-semibold text-white bg-indigo-600 shadow-md select-none pointer-events-auto"
+        className="absolute -top-7 left-0 z-50 flex items-center gap-1 px-2 py-0.5 rounded-t-md text-[11px] font-semibold text-white bg-indigo-600 shadow-xl select-none pointer-events-auto"
         onClick={(e) => e.stopPropagation()}
       >
-        <span>{node.name || node.type}</span>
+        <span className="capitalize">{node.name || node.type}</span>
+
+        <div className="h-3 w-px bg-indigo-400/50 mx-0.5" />
+
+        {/* Move Up */}
+        <button
+          title="Move Up"
+          onClick={() => moveNodeUp(node.id)}
+          className="p-0.5 hover:bg-indigo-700 rounded transition text-indigo-100 hover:text-white"
+        >
+          <ArrowUp className="w-3 h-3" />
+        </button>
+
+        {/* Move Down */}
+        <button
+          title="Move Down"
+          onClick={() => moveNodeDown(node.id)}
+          className="p-0.5 hover:bg-indigo-700 rounded transition text-indigo-100 hover:text-white"
+        >
+          <ArrowDown className="w-3 h-3" />
+        </button>
+
+        {/* Select Parent */}
         {node.parentId && (
           <button
             title="Select Parent"
             onClick={handleSelectParent}
-            className="p-0.5 hover:bg-indigo-700 rounded transition"
+            className="p-0.5 hover:bg-indigo-700 rounded transition text-indigo-100 hover:text-white"
           >
-            <ArrowUp className="w-3 h-3" />
+            <ChevronUp className="w-3 h-3" />
           </button>
         )}
+
+        {/* Duplicate */}
         <button
           title="Duplicate"
           onClick={() => duplicateNode(node.id)}
-          className="p-0.5 hover:bg-indigo-700 rounded transition"
+          className="p-0.5 hover:bg-indigo-700 rounded transition text-indigo-100 hover:text-white"
         >
           <Copy className="w-3 h-3" />
         </button>
+
+        {/* Delete */}
         <button
           title="Delete"
           onClick={() => deleteNode(node.id)}
-          className="p-0.5 hover:bg-red-600 rounded transition"
+          className="p-0.5 hover:bg-red-600 rounded transition text-indigo-100 hover:text-white"
         >
           <Trash2 className="w-3 h-3" />
         </button>
@@ -135,9 +214,9 @@ export const CanvasNode: React.FC<CanvasNodeProps> = ({ node, device }) => {
       !previewMode
     ) {
       return (
-        <div className="flex flex-col items-center justify-center p-6 border border-dashed border-zinc-700 rounded-lg text-zinc-500 hover:text-zinc-400 bg-zinc-900/40 w-full min-h-[70px]">
-          <Plus className="w-4 h-4 mb-1" />
-          <span className="text-xs">Drop or add elements here</span>
+        <div className="flex flex-col items-center justify-center p-6 border border-dashed border-zinc-800 rounded-lg text-zinc-500 hover:text-zinc-400 bg-zinc-900/40 w-full min-h-[70px] transition-colors">
+          <Plus className="w-4 h-4 mb-1 text-zinc-600" />
+          <span className="text-[11px]">Drop elements or blocks inside</span>
         </div>
       );
     }
@@ -148,10 +227,25 @@ export const CanvasNode: React.FC<CanvasNodeProps> = ({ node, device }) => {
     switch (node.type) {
       case "heading": {
         const Tag = node.props.tag || "h2";
+        if (isEditingInline) {
+          return (
+            <input
+              ref={inputRef as React.RefObject<HTMLInputElement>}
+              type="text"
+              value={inlineValue}
+              onChange={(e) => setInlineValue(e.target.value)}
+              onBlur={handleInlineBlur}
+              onKeyDown={handleInlineKeyDown}
+              style={mergedStyles}
+              className="bg-transparent outline-none ring-2 ring-indigo-500 rounded px-1"
+            />
+          );
+        }
         return (
           <Tag
             ref={setNodeRef}
             onClick={handleClick}
+            onDoubleClick={handleDoubleClick}
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
             style={mergedStyles}
@@ -164,10 +258,25 @@ export const CanvasNode: React.FC<CanvasNodeProps> = ({ node, device }) => {
 
       case "text": {
         const Tag = node.props.tag || "p";
+        if (isEditingInline) {
+          return (
+            <textarea
+              ref={inputRef as React.RefObject<HTMLTextAreaElement>}
+              rows={2}
+              value={inlineValue}
+              onChange={(e) => setInlineValue(e.target.value)}
+              onBlur={handleInlineBlur}
+              onKeyDown={handleInlineKeyDown}
+              style={mergedStyles}
+              className="bg-transparent outline-none ring-2 ring-indigo-500 rounded p-1 resize-none w-full"
+            />
+          );
+        }
         return (
           <Tag
             ref={setNodeRef}
             onClick={handleClick}
+            onDoubleClick={handleDoubleClick}
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
             style={mergedStyles}
@@ -179,10 +288,25 @@ export const CanvasNode: React.FC<CanvasNodeProps> = ({ node, device }) => {
       }
 
       case "button": {
+        if (isEditingInline) {
+          return (
+            <input
+              ref={inputRef as React.RefObject<HTMLInputElement>}
+              type="text"
+              value={inlineValue}
+              onChange={(e) => setInlineValue(e.target.value)}
+              onBlur={handleInlineBlur}
+              onKeyDown={handleInlineKeyDown}
+              style={mergedStyles}
+              className="bg-transparent outline-none ring-2 ring-indigo-500 rounded px-1"
+            />
+          );
+        }
         return (
           <button
             ref={setNodeRef}
             onClick={handleClick}
+            onDoubleClick={handleDoubleClick}
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
             style={mergedStyles}

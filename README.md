@@ -1,4 +1,4 @@
-# VascoUI — Sleek Visual Page Builder
+# VascoUI — Visual Page Builder & Studio
 
 A production-ready Visual UI Builder built with Next.js 14+ (App Router), Zustand, `@dnd-kit`, Tailwind CSS, and Turso Edge Database with Drizzle ORM.
 

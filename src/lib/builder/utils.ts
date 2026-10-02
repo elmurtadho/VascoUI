@@ -428,7 +428,7 @@ export const initialTemplateNodes: BuilderNode[] = [
             id: "badge_1",
             type: "button",
             name: "Announce Badge",
-            props: { content: "⚡ Sleek UI Builder 2.0 Live", href: "#" },
+            props: { content: "⚡ Vasco Studio 2.0 Live", href: "#" },
             styles: {
               desktop: {
                 display: "inline-flex",
@@ -766,3 +766,112 @@ ${body}
 }
 `;
 }
+
+function styleObjectToCssString(styles: Record<string, unknown>): string {
+  return Object.entries(styles)
+    .map(([key, val]) => {
+      const kebab = key.replace(/([A-Z])/g, "-$1").toLowerCase();
+      return `${kebab}: ${val};`;
+    })
+    .join(" ");
+}
+
+export function generateHtmlCode(nodes: BuilderNode[]): string {
+  function renderHtmlNode(node: BuilderNode, depth: number): string {
+    const indent = "  ".repeat(depth);
+    const styles = node.styles.desktop || {};
+    const css = styleObjectToCssString(styles as Record<string, unknown>);
+    const styleAttr = css ? ` style="${css}"` : "";
+
+    switch (node.type) {
+      case "heading": {
+        const Tag = node.props.tag || "h2";
+        return `${indent}<${Tag}${styleAttr}>${node.props.content || ""}</${Tag}>`;
+      }
+      case "text": {
+        const Tag = node.props.tag || "p";
+        return `${indent}<${Tag}${styleAttr}>${node.props.content || ""}</${Tag}>`;
+      }
+      case "button": {
+        return `${indent}<button${styleAttr}>${node.props.content || "Button"}</button>`;
+      }
+      case "image": {
+        return `${indent}<img src="${node.props.src || ""}" alt="${node.props.alt || ""}"${styleAttr} />`;
+      }
+      default: {
+        const Tag = node.props.tag || "div";
+        const hasChildren = node.children && node.children.length > 0;
+        if (!hasChildren) {
+          return `${indent}<${Tag}${styleAttr}></${Tag}>`;
+        }
+        const inner = node.children.map((c) => renderHtmlNode(c, depth + 1)).join("\n");
+        return `${indent}<${Tag}${styleAttr}>\n${inner}\n${indent}</${Tag}>`;
+      }
+    }
+  }
+
+  const innerHtml = nodes.map((n) => renderHtmlNode(n, 2)).join("\n");
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vasco Exported Page</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #09090b; color: #fafafa; }
+  </style>
+</head>
+<body>
+${innerHtml}
+</body>
+</html>`;
+}
+
+export function moveNodeUpInTree(nodes: BuilderNode[], id: string): BuilderNode[] {
+  // Check at current level
+  const index = nodes.findIndex((n) => n.id === id);
+  if (index > 0) {
+    const copy = [...nodes];
+    const temp = copy[index - 1];
+    copy[index - 1] = copy[index];
+    copy[index] = temp;
+    return copy;
+  }
+
+  // Recurse into children
+  return nodes.map((node) => {
+    if (node.children && node.children.length > 0) {
+      return {
+        ...node,
+        children: moveNodeUpInTree(node.children, id),
+      };
+    }
+    return node;
+  });
+}
+
+export function moveNodeDownInTree(nodes: BuilderNode[], id: string): BuilderNode[] {
+  // Check at current level
+  const index = nodes.findIndex((n) => n.id === id);
+  if (index !== -1 && index < nodes.length - 1) {
+    const copy = [...nodes];
+    const temp = copy[index + 1];
+    copy[index + 1] = copy[index];
+    copy[index] = temp;
+    return copy;
+  }
+
+  // Recurse into children
+  return nodes.map((node) => {
+    if (node.children && node.children.length > 0) {
+      return {
+        ...node,
+        children: moveNodeDownInTree(node.children, id),
+      };
+    }
+    return node;
+  });
+}
+

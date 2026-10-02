@@ -5,6 +5,8 @@ import {
   createDefaultNode,
   initialTemplateNodes,
   insertNodeIntoTree,
+  moveNodeDownInTree,
+  moveNodeUpInTree,
   removeNodeFromTree,
   updateNodeInTree,
 } from "@/lib/builder/utils";
@@ -18,6 +20,11 @@ interface BuilderState {
   hoveredNodeId: string | null;
   currentDevice: Device;
   previewMode: boolean;
+
+  // Viewport and UI Preferences
+  zoomLevel: number;
+  showGrid: boolean;
+  showDeviceFrame: boolean;
 
   // Project Info
   projectId: string;
@@ -38,10 +45,18 @@ interface BuilderState {
   setSaving: (saving: boolean) => void;
   setLastSavedAt: (date: Date) => void;
 
+  // Viewport Actions
+  setZoomLevel: (zoom: number) => void;
+  toggleGrid: () => void;
+  toggleDeviceFrame: () => void;
+
   // Tree Manipulation
   addNode: (type: NodeType, parentId?: string | null, index?: number) => void;
   insertRawNode: (node: BuilderNode, parentId?: string | null, index?: number) => void;
+  insertBlock: (block: BuilderNode) => void;
   moveNode: (nodeId: string, targetParentId: string | null, targetIndex?: number) => void;
+  moveNodeUp: (nodeId: string) => void;
+  moveNodeDown: (nodeId: string) => void;
   updateNodeProps: (id: string, props: Partial<NodeCustomProps>) => void;
   updateNodeStyles: (
     id: string,
@@ -67,8 +82,12 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
   currentDevice: "desktop",
   previewMode: false,
 
+  zoomLevel: 1,
+  showGrid: true,
+  showDeviceFrame: true,
+
   projectId: "default_project",
-  projectName: "Untitled Page",
+  projectName: "Vasco Studio Page",
   isSaving: false,
   lastSavedAt: null,
 
@@ -83,6 +102,10 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
   setProjectName: (name) => set({ projectName: name }),
   setSaving: (saving) => set({ isSaving: saving }),
   setLastSavedAt: (date) => set({ lastSavedAt: date }),
+
+  setZoomLevel: (zoom) => set({ zoomLevel: zoom }),
+  toggleGrid: () => set((state) => ({ showGrid: !state.showGrid })),
+  toggleDeviceFrame: () => set((state) => ({ showDeviceFrame: !state.showDeviceFrame })),
 
   addNode: (type, parentId = null, index) => {
     const { nodes, history } = get();
@@ -109,20 +132,50 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
     });
   },
 
+  insertBlock: (blockNode) => {
+    const { nodes, history } = get();
+    const updatedNodes = [...nodes, blockNode];
+
+    set({
+      nodes: updatedNodes,
+      selectedNodeId: blockNode.id,
+      history: [...history.slice(-MAX_HISTORY), nodes],
+      future: [],
+    });
+  },
+
   moveNode: (nodeId, targetParentId = null, targetIndex) => {
     const { nodes, history } = get();
-    if (nodeId === targetParentId) return; // Cannot drop into self
+    if (nodeId === targetParentId) return;
 
-    // Remove from old position
     const { newNodes, removed } = removeNodeFromTree(nodes, nodeId);
     if (!removed) return;
 
-    // Insert into target position
     const finalNodes = insertNodeIntoTree(newNodes, removed, targetParentId, targetIndex);
 
     set({
       nodes: finalNodes,
       selectedNodeId: nodeId,
+      history: [...history.slice(-MAX_HISTORY), nodes],
+      future: [],
+    });
+  },
+
+  moveNodeUp: (nodeId) => {
+    const { nodes, history } = get();
+    const updated = moveNodeUpInTree(nodes, nodeId);
+    set({
+      nodes: updated,
+      history: [...history.slice(-MAX_HISTORY), nodes],
+      future: [],
+    });
+  },
+
+  moveNodeDown: (nodeId) => {
+    const { nodes, history } = get();
+    const updated = moveNodeDownInTree(nodes, nodeId);
+    set({
+      nodes: updated,
       history: [...history.slice(-MAX_HISTORY), nodes],
       future: [],
     });
